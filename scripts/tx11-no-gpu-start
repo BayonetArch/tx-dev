@@ -1,0 +1,25 @@
+#!/data/data/com.termux/files/usr/bin/env bash
+
+fatal() {
+  echo -e "Error: $1"
+  exit 1
+}
+INFO="\e[33mINFO:\e[0m"
+
+echo -e "$INFO fixing permissions for xdg_runtime_dir"
+chmod 700 "${XDG_RUNTIME_DIR:-/data/data/com.termux/files/usr/tmp}"
+
+echo -e "$INFO killing existing x11 process"
+kill -9 $(pgrep -f "termux.x11") 2>/dev/null
+
+echo -e "$INFO starting x11 display server"
+termux-x11 :0 >/dev/null 2>&1 &
+sleep 0.6
+
+echo -e "$INFO starting termux-x11 window"
+am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity >/dev/null 2>&1 || fatal "could not start the termux-x11 window.\nis termux-x11 installed?"
+sleep 0.4
+
+echo -e "$INFO starting DE with gpu accel disabled"
+dbus-daemon --session --address=unix:path="$PREFIX"/var/run/dbus &>/dev/null &
+env DISPLAY=:0 dbus-launch --exit-with-session dwm >/dev/null 2>&1 || fatal "could not start dwm."

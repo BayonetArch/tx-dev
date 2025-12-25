@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+#Script to update skim since its not in official termux repo
+
+set -euo pipefail
+mkdir -p "$HOME/.local/bin/skim"
+curl_url="https://api.github.com/repos/skim-rs/skim/releases/latest"
+
+# get the download url of the latest version
+
+latest_version_url=$(curl -s $curl_url | grep browser_download_url | grep "skim-aarch64-unknown-linux-musl.tgz" | cut -d '"' -f 4)
+
+# extract the version info
+release_version=$(echo "$latest_version_url" | grep -oP "download/\K[^/]+")
+
+# make temp dir
+tmp_dir=$(mktemp -d)
+
+#define downloaded tarball path
+tarball_path="$tmp_dir/sk-$release_version.tgz"
+
+# check if sk is Installed or not
+# if not just install  the latest version
+
+if ! command -v sk >/dev/null; then
+
+    echo -en "Seems like sk is not installed "
+    sleep 1
+    echo
+
+    echo -e "Downloading\e[1;32m sk $release_version\e[0m"
+
+    wget -O "$tarball_path" "$latest_version_url"
+
+    tar xvf "$tarball_path" -C "$tmp_dir"
+
+    binary_path=$(find "$tmp_dir" -type f -name sk | head -n 1)
+
+    sleep 1
+
+    cp "$binary_path" "$PREFIX"/bin/
+    cp "$binary_path" "$HOME"/.local/bin/skim
+
+    rm -rf "$tmp_dir"
+
+    echo -e "Installed \e[1;32msk $release_version\e[0m "
+
+    exit 0
+fi
+
+# continue if sk is installed
+
+current_version=$(sk --version | sed 's/sk //') # get current sk version
+
+echo "current : v$current_version"
+echo "release : $release_version"
+
+# Update if current_version doesnot match release version
+
+if [[ $release_version == *"$current_version"* ]]; then
+
+    echo "Hurray ! sk is upto date "
+    exit 0
+else
+
+    echo "New version $release_version found "
+    read -rp "Do you want to continue?(Y/n):" uchoice && uchoice=${uchoice^}
+
+    [[ $uchoice == *"N"* ]] && exit 1
+
+    echo -e "Downloading tarball now.."
+
+    wget -O "$tarball_path" "$latest_version_url"
+
+    tar xvf "$tarball_path" -C "$tmp_dir"
+
+    binary_path=$(find "$tmp_dir" -type f -name sk | head -n 1)
+
+    sleep 1
+
+    cp "$binary_path" "$PREFIX"/bin/
+    cp "$binary_path" "$HOME"/.local/bin/skim/
+
+    rm -rf "$tmp_dir"
+
+    echo -e "Updated sk  to \e[1;32m$release_version\e[0m  "
+fi

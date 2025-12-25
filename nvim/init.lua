@@ -1,0 +1,6 @@
+require("config.lazy")
+require("config.keybinds")
+require("config.options")
+require("config.highlight")
+require("config.autocmds")
+require("flash").toggle()

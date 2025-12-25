@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# ----List current tmux-sessions in a new skim window-----------
+
+if [[ -z $TMUX ]]; then
+  exit 1
+fi
+
+tmux list-sessions -F '#S' | sk -e --color=bw,header:225,prompt:69,cursor:24 --header="Tmux Sessions" \
+  --bind "alt-m:execute(tmux switch-client -t {})+abort"

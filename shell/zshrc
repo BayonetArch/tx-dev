@@ -1,0 +1,274 @@
+clear
+echo
+echo
+# ========================
+# Powerlevel10k Instant Prompt
+# ========================
+
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+
+# Skim fuzzy finder settings
+export SKIM_DEFAULT_OPTIONS='--margin 15% --color=bw --bind alt-m:accept --bind alt-e:abort'
+export FZF_DEFAULT_OPTS='--margin 15% --bind alt-m:accept,alt-e:abort'
+export SKIM_COMPLETION_TRIGGER="**"
+
+
+# Use nvim for man pages
+export MANPAGER="nvim +Man!"
+
+# ========================
+# Key Bindings
+# ========================
+
+# bindkey -M viins '^F' autosuggest-accept        # Ctrl+F: accept suggestion
+# bindkey -M viins '\e ' vi-forward-word          # Alt+Space: forward word
+
+bindkey "^[e" send-break
+
+bindkey "^[h" backward-delete-char
+
+bindkey "^[w" backward-kill-word
+
+bindkey "^[m" accept-line
+
+bindkey "^[l" clear-screen
+
+bindkey "^[i" expand-or-complete
+
+bindkey '^[r' skim-history-widget
+
+
+# # Smart tmux binding (Alt+T)
+# tmux_running=$(pgrep tmux)
+# if command -v tmux-startup >/dev/null; then
+#     if [[ -z "$TMUX" ]] && [[ -z $tmux_running ]]; then
+#         bindkey -s '^[t' 'tmux-startup\n'
+#     elif [[ -n $tmux_running ]] && [[ -z $TMUX ]]; then
+#         bindkey -s '^[t' 'tmux a -t home\n'
+#     else
+#         bindkey -s '^[t' 'clear; echo "Already in tmux, chill";\n'
+#     fi
+# fi
+# lazygit bindings 
+        # bindkey -s '^[g' 'lazygit\n'
+
+
+# Reduce key timeout for faster mode switching
+KEYTIMEOUT=1
+
+# ========================
+# History Configuration
+# ========================
+
+HISTSIZE=5000
+HISTFILE=~/.zsh_history
+SAVEHIST=$HISTSIZE
+HISTDUP=erase
+
+setopt appendhistory sharehistory
+setopt hist_ignore_all_dups hist_save_no_dups
+setopt hist_ignore_dups hist_find_no_dups
+
+
+# ========================
+# Set options
+# ========================
+
+setopt interactivecomments
+
+# ========================
+# Load Aliases
+# ========================
+
+[[ -f "$HOME/.startup-files/.alias.txt" ]] && source "$HOME/.startup-files/.alias.txt"
+
+# ========================
+# Zap Setup
+# ========================
+zap_url="https://raw.githubusercontent.com/zap-zsh/zap/refs/heads/master/zap.zsh"
+plugins_dir="$HOME/.local/share/zap/plugins"
+zap_file="$HOME/.zap.zsh"
+
+[[ -f $zap_file  ]] || wget -O $zap_file  $zap_url
+
+[[ -f $zap_file ]] && source $zap_file
+
+[[ -d  $plugins_dir ]] || mkdir -p $plugins_dir
+
+# # ========================
+# # Zap Plugins
+# # ========================
+
+
+[[ -z "$SSH_CONNECTION" ]]  &&  [[  -z "$NVIM"  ]] && plug "romkatv/powerlevel10k"
+
+
+
+plug "zsh-users/zsh-syntax-highlighting"
+
+# plug "zs-users/zsh-autosuggestions"
+
+
+autoload -Uz compinit && compinit
+
+# ========================
+# Plugin Configuration
+# ========================
+
+# Autosuggestion performance tuning
+ZSH_AUTOSUGGEST_USE_ASYNC=true
+ZSH_AUTOSUGGEST_MANUAL_REBIND=true
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+
+
+# ========================
+#  Completion setup
+# ========================
+
+# Basic completion with visual menu
+zstyle ':completion:*' menu select
+
+# Case insensitive matching
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+
+
+# Group and format completions nicely
+zstyle ':completion:*:messages' format '%F{purple}-- %d --%f'
+zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
+
+zstyle ':completion:*' menu select=2
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+
+# Completion styling
+zstyle ':completion:*' squeeze-slashes true
+zstyle ':completion:*' file-sort modification
+
+# Cache for speed
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path ~/.zsh/cache
+
+# ========================
+# Tool Installation & Setup
+# ========================
+
+install_if_missing() {
+    local tool=$1
+    local install_cmd=$2
+    
+    if ! command -v $tool >/dev/null; then
+        echo "Installing $tool..."
+        eval $install_cmd
+    fi
+}
+
+
+# Skim (sk) setup
+if command -v sk >/dev/null; then
+    source <(sk --shell zsh)
+else
+    if command -v nix >/dev/null; then
+        install_if_missing sk "nix-env -iA nixpkgs.skim"
+    elif [[ -n "$PREFIX" ]]; then
+        echo "Downloading latest skim release..."
+        latest_url=$(curl -s https://api.github.com/repos/skim-rs/skim/releases/latest | \
+            grep browser_download_url | grep "skim-aarch64-unknown-linux-musl.tgz" | cut -d '"' -f 4)
+        
+        if [[ -n "$latest_url" ]]; then
+            tmp_dir=$(mktemp -d)
+            wget -O "$tmp_dir/sk.tgz" "$latest_url" && \
+            tar xf "$tmp_dir/sk.tgz" -C "$tmp_dir" && \
+            cp "$tmp_dir/sk" "$PREFIX/bin/" && \
+            cp "$tmp_dir/sk" "$HOME/.local/bin/" && \
+            rm -rf "$tmp_dir" && \
+            echo -e "✓ Installed \e[1;32mskim\e[0m"
+        fi
+    fi
+fi
+
+# Load skim key bindings
+if [[ ! -f "$HOME/.sk-binds.zsh" ]]; then
+    echo "Downloading skim key bindings..."
+
+    if wget -O "$HOME/.sk-binds.zsh" https://raw.githubusercontent.com/skim-rs/skim/refs/heads/master/shell/key-bindings.zsh; then
+        echo -e "✓ Downloaded \e[1;32mskim keybindings(.sk-binds.zsh)\e[0m"
+    else
+
+        echo -e "✗ Failed to download skim keybindings(.sk-binds)"
+        rm -f "$HOME/.sk-binds.zsh"
+    fi
+fi
+[[ -f "$HOME/.sk-binds.zsh" ]] && source "$HOME/.sk-binds.zsh"
+
+# directory colors setup not in the ssh connection tho
+if [[ -z "$SSH_CONNECTION" ]];then
+
+if [[ -f "$HOME/.dircolors" ]]; then
+    eval "$(dircolors -b ~/.dircolors)"
+else
+    echo "Setting up directory colors..."
+    if wget -O $HOME/.dircolors https://raw.githubusercontent.com/BayonetArch/dircolor/refs/heads/main/.dircolors ; then
+        eval "$(dircolors -b ~/.dircolors)"
+        echo -e "✓ dircolors setup success"
+    else
+        echo -e "✗ Failed to download dircolors theme"
+    fi
+fi
+fi
+
+# Zoxide setup 
+if command -v zoxide >/dev/null; then
+    eval "$(zoxide init --cmd cd zsh)"
+else
+    if [[ -n "$PREFIX" ]]; then
+        install_if_missing zoxide "apt install zoxide -y"
+    elif command -v nix >/dev/null; then
+        install_if_missing zoxide "nix-env -iA nixpkgs.zoxide"
+    else
+        echo "Please install zoxide with your package manager"
+    fi
+    command -v zoxide >/dev/null && eval "$(zoxide init --cmd cd zsh)"
+fi
+
+# ========================
+# Final Setup
+# ========================
+
+# Load Powerlevel10k configuration
+[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
+
+
+if [[  -n "$SSH_CONNECTION" ]]; then setopt PROMPT_SUBST
+
+    PROMPT='@remote %F{111}%3~%f %F{242}$%f '
+
+    # PROMPT='%F{114}%3~%f %F{242}$%f '
+fi
+
+[[ -n "$NVIM" ]] && PROMPT='%2~ %(#.#.$ )'
+
+
+
+
+# ========================
+# Basic PATH and Terminfo
+# ========================
+export XDG_RUNTIME_DIR="$HOME/.local/runtime"
+export XDG_CONFIG_HOME="$HOME/.config"
+export DISPLAY=:0
+
+export PATH="$PATH:$HOME/.local/bin"
+export PATH="$PATH:$HOME/.scripts/"
+export PATH="$PATH:$HOME/.cargo/bin/"
+
+export TERMINFO=/data/data/com.termux/files/usr/share/terminfo
+export TERM=xterm-256color
+export SHARED="$PREFIX"/udocker-share
+
+# download path
+export DOWNLOAD="/storage/emulated/0/Download"
+
+# mason 
+export PATH="/data/data/com.termux/files/home/.local/share/nvim/mason/bin:$PATH"

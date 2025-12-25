@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+mkdir -p "$HOME/.termux"
+termux_prop_path="$HOME/.termux/termux.properties"
+option="$1"
+if [ -z "$option" ]; then
+  echo "toggle between mobile keyboard and physical keyboard settings"
+  echo "ERROR: No option provided."
+  echo "Usage: $(basename "$0") phy|mob"
+  exit 1
+fi
+
+if [[ $option != "phy" && $option != "mob" ]]; then
+  echo "ERROR: Invalid option '$option'. Use 'phy' or 'mob'."
+  exit 1
+fi
+
+phy() {
+  rm -f $termux_prop_path
+  echo "# for physical keyboard
+  allow-external-apps = true
+  fullscreen = true
+  use-fullscreen-workaround = true
+  extra-keys = []
+  ctrl-space-workaround = true
+  " >"$termux_prop_path"
+  termux-reload-settings
+}
+
+mob() {
+  rm $termux_prop_path
+  termux-reload-settings
+}
+if [[ $option == "phy" ]]; then
+  phy
+elif [[ $option == "mob" ]]; then
+  mob
+fi
+exit 0

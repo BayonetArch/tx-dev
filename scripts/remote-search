@@ -1,0 +1,11 @@
+#!/data/data/com.termux/files/usr/bin/env bash
+
+read -rp "Search word: " str
+
+set -xe
+
+fmtstr=${str// /+}
+url="https://www.google.com/search?q=$fmtstr&hl=en"
+command="termux-open \"$url\""
+
+ssh remote $command

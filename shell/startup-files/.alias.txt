@@ -1,0 +1,46 @@
+alias cp="cp -vi"
+alias CP="cp -vi"
+alias lg="lazygit"
+
+alias RM="rm -v"
+
+alias mv="mv -v"
+alias MV="mv -v"
+
+alias kk='pkill -9 -u $(whoami)'
+
+alias update='apt update -y && apt upgrade -y && apt autoremove && update-termux'
+alias UPDATE='apt update -y && apt upgrade -y && update-termux'
+
+alias ..='cd ..'
+alias ....='cd ../../'
+alias ......='cd ../../../'
+alias repo="echo 'gh repo create my-repo-name --public --source=. --remote=origin --push'"
+
+alias ll="ls --color=auto -SshA"
+alias LL="ls --color=auto -SshA"
+
+if [[ -z "$SSH_CONNECTION" ]]  ;then
+
+alias vi="nvim" alias VI="nvim"
+else
+alias vi="nvim"
+  fi
+
+[[ -n "$NVIM" ]] && alias vi="NVIM_APPNAME=nvissh nvim"
+
+alias alt="vi $HOME/.startup-files/.alias.txt"
+alias sede="echo 'sed -i '5s/hello/terminal/g' smth.txt'"
+alias fzfd='selected=$(find . -type f | fzf); [ -n "$selected" ] && cd "$(dirname "$selected")"'
+alias random="echo 'ls -1 idk/*.jpg | shuf -n 1'"
+
+alias ZRC="vi $HOME/.zshrc"
+alias zrc="vi $HOME/.zshrc"
+
+alias rl="exec zsh"
+alias RL="exec zsh"
+alias ls="ls -Ssh --color=auto"
+alias LS="ls -Ssh --color=auto"
+alias cl='clear'
+alias CL='clear'
+alias CD='cd'

@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo
+echo "Termux apk update"
+origin_tty=$(stty -g) #original tty information
+trap ' stty "$origin_tty" && rm -rf  "$TMPDIR"/*  && echo -e "\nExiting..." ;exit 1' SIGINT SIGTERM
+
+stty -echoctl #donot display  ctrl keys
+
+WHITE_BOLD='\033[1;37m'
+INFO="[\e[1;33mi\e[0m]"
+
+# api url for release download and beta Download
+curl_url="https://api.github.com/repos/termux/termux-app/releases/latest"
+beta_curl_url="https://api.github.com/repos/termux/termux-app/releases"
+
+# current termux version
+current_version="$TERMUX_VERSION"
+
+[[ -z "$current_version" ]] && exit 1
+
+# extract the latest release url from the api
+
+latest_release_url=$(curl -s $curl_url | grep "browser_download_url" | grep "github-debug_arm64-v8a.apk" | cut -d '"' -f 4)
+
+# extract the version info
+
+for i in {6..10}; do
+    latest_release_version=$(echo "$latest_release_url" | awk -F/ -v ch="$i" '{print $ch}')
+    if [[ $latest_release_version == *"v"* ]]; then
+        break
+    fi
+done
+
+# extract the latest beta url from the api
+
+latest_beta_url=$(curl -s $beta_curl_url | jq -r 'map(select(.prerelease)) | first | .assets[6].browser_download_url')
+
+# extract the version info
+
+latest_beta_version=$(curl -s $beta_curl_url | jq -r 'map(select(.prerelease)) | first | .tag_name')
+
+echo -e "\e[1;31mCurrent \e[0m: ${WHITE_BOLD}$current_version\e[0m"
+echo -e "\e[1;33mlatest-beta-release\e[0m: ${WHITE_BOLD}$latest_beta_version\e[0m"
+
+echo -e "\e[0;32mlatest-release\e[0m: ${WHITE_BOLD}$latest_release_version\e[0m"
+
+# function for checking command status
+
+_check_status() {
+    desc="$1"
+    command="$2"
+
+    if eval "$command"; then
+
+        echo -e "▶ $desc Sucess\e[1;32m  \e[0m"
+    else
+        echo -e "▶ $desc Failure\e[1;31m  \e[0m"
+    fi
+}
+
+# main install function
+
+_setup() {
+    download_url="$1"
+    tmpdir=$(mktemp -d)
+    apk_path="$tmpdir/termux-app.apk"
+
+    echo -e "${INFO} Downloading apk..\e[0m"
+    _check_status "Download termux apk" "wget -O $apk_path $download_url 2>/dev/null"
+    read -rp "Install now[Y/n]?" choice && choice=${choice^^}
+
+    [[ $choice != *"N"* ]] && termux-open "$apk_path" && sleep 4.5
+
+}
+
+echo
+echo "Which version to setup ?  "
+echo -e "1.beta"
+echo -e "2.release"
+echo -e "3.exit"
+echo -ne "Enter option(default 3):"
+read -r choice
+
+if [[ $choice == *"1"* ]]; then
+
+    _setup "$latest_beta_url"
+
+elif [[ $choice == *"2"* ]]; then
+
+    _setup "$latest_release_url"
+
+else
+    echo "Exiting..." && exit 1
+fi

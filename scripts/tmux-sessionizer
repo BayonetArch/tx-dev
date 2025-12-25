@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+#tmux sessionizer script
+
+if [[ $# -eq 1 ]]; then
+    selected=$1
+else
+
+    selected=$(
+        (
+            echo "home"
+            echo "ssh"
+            find \
+                ~/documents/projects ~/.dotfiles/.config/ ~/documents/ex-repos \
+                ~/documents/git-pjs ~/ ~/documents/notes/EDU ~/documents/notes \
+                ~/documents/ ~/documents/textbooks/ \
+                -mindepth 1 -maxdepth 1 -type d \
+                ! -name edu \
+                ! -name .cache \
+                ! -name .wall \
+                ! -name .zfunc \
+                ! -name .npm \
+                ! -name .udocker \
+                ! -name .ssh \
+                ! -name .projects \
+                ! -name .password-store \
+                ! -name .cargo \
+                ! -name .cargo-target \
+                ! -name .gnupg
+        ) | sed "s|^$HOME/||" | sk -e --margin 10% --color="bw"
+    )
+fi
+
+[[ -z $selected ]] && exit 0
+
+case "$selected" in
+home)
+    selected="$HOME"
+    ;;
+ssh)
+    selected="ssh"
+    ;;
+*)
+    selected="$HOME/$selected"
+    ;;
+esac
+
+selected_name=$(basename "$selected" | tr . _)
+_ssh="ssh bayonet-remote"
+tmux_running=$(pgrep tmux)
+
+# Not in tmux and no tmux running: start new session
+if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
+    if [[ $selected == "ssh" ]]; then
+        tmux new-session -s "$selected_name" "$_ssh"
+    else
+        tmux new-session -s "$selected_name" -c "$selected"
+    fi
+    exit 0
+fi
+
+# Session doesn't exist: create detached
+if ! tmux has-session -t="$selected_name" 2>/dev/null; then
+    if [[ $selected == "ssh" ]]; then
+        tmux new-session -ds "$selected_name" "$_ssh"
+    else
+        tmux new-session -ds "$selected_name" -c "$selected"
+    fi
+fi
+
+# Switch to the session
+tmux switch-client -t "$selected_name"

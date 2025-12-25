@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+battery_percentage=$(
+  termux-battery-status | rg "percentage" | cut -d ':' -f 2 | sed 's/,//' | sed 's/ //'
+)
+if [[ "$battery_percentage" -le 15 ]]; then
+  echo -e "Battery :\e[0;31m$battery_percentage%\e[0m"
+elif [[ "$battery_percentage" -ge 15 && "$battery_percentage" -le 30 ]]; then
+  echo -e "Battery :\e[0;33m$battery_percentage%\e[0m"
+else
+  echo -e "Battery :\e[0;36m $battery_percentage%\e[0m"
+fi
