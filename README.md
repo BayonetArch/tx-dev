@@ -35,23 +35,24 @@ restart termux and start neovim and wait for all plugins and bins to complete do
 
 After installation you should have an working setup to start coding on most lanaguages with neovim.
 
-- Zoxide
+### Zoxide
 
 config uses zoxide so you should just be able to cd anywhere where you have been with `cd foo`.
 
-- tmux
+
+### tmux
     
 config installs tmux with minimal theme.
 You can change keybinds in `~/.config/tmux/tmux.conf`.
 But default keybinds of my config are as follows:
 
-- Alt-k : leader key
-- Alt-a : launch android apps
-- Alt-c : new window
-- Alt-h : previous window
-- Alt-l : next window
-
-- neovim
+Alt-k : leader key<br>
+Alt-a : launch android apps<br>
+Alt-c : new window<br>
+Alt-h : previous window<br>
+Alt-l : next window
+<br>
+### neovim ###
 
 config has comprehensive config for neovim.You can see keybinds or change bindings at `$HOME/.config/nvim/lua/config/keybinds.lua`
 
