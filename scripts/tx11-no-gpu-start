@@ -6,8 +6,6 @@ fatal() {
 }
 INFO="\e[33mINFO:\e[0m"
 
-echo -e "$INFO fixing permissions for xdg_runtime_dir"
-chmod 700 "${XDG_RUNTIME_DIR:-/data/data/com.termux/files/usr/tmp}"
 
 echo -e "$INFO killing existing x11 process"
 kill -9 $(pgrep -f "termux.x11") 2>/dev/null

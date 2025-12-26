@@ -46,7 +46,7 @@ bin_exists() {
 
 install_pkgs_apt() {
   local package=$1
-  if ! sudo apt install -y "$package" &>/dev/null; then
+  if ! apt install -y "$package" &>/dev/null; then
     fatal "Failed to install $package"
   fi
 }
@@ -62,14 +62,15 @@ install_dependencies() {
     ["clang"]="clang"
     ["shellcheck"]="shellcheck"
     ["lua-language-server"]="lua-language-server"
+    ["stylua"]="stylua"
     ["shfmt"]="shfmt"
     ["fzf"]="fzf"
     ["ripgrep"]="rg"
+    ["rust"]="rustc"
     ["rust-analyzer"]="rust-analyzer"
     ["python3"]="python3"
     ["python-pip"]="pip"
     ["nodejs"]="node"
-    ["rust"]="rustc"
     ["cmake"]="cmake"
     ["make"]="make"
   )
@@ -81,8 +82,14 @@ install_dependencies() {
 
       if [ "${package_map[$pkg]}" == "$pkg_bin" ]; then
         if ! bin_exists "$pkg_bin"; then
-          msg "Installing $package"
+          msg "Installing $pkg"
+          prev=$SECONDS
+
           install_pkgs_apt "$pkg"
+
+          took=$((SECONDS - prev))
+          msg "took ${took}s"
+
         else
           msg "$pkg is already installed, skipping..."
         fi
@@ -105,7 +112,7 @@ set_default_shell() {
 }
 
 setup_termux_theme_and_font() {
-  cp -r "./termux/" "$HOME/" || err_msg "Could not copy the './termux' dir."
+  cp ./termux/* "$HOME/.termux/" || err_msg "Could not copy the './termux' dir."
 
 }
 
@@ -126,30 +133,33 @@ setup_nvim_tmux() {
   local nvim_src_path="./nvim"
   local nvim_dest_path="$CONFIG_PATH/nvim"
 
-  if [[ -d "$nvim_src_path" ]]; then
-
-    local mid="$(date +%m-%M-%S)"
+  if [[ -d "$nvim_dest_path" ]]; then
+    local mid
+    mid="$(date +%m-%M-%S)"
 
     local backup_path="$CONFIG_PATH/nvim.$mid.backup"
     msg "'$nvim_dest_path' already exists creating backup '$backup_path'"
 
     mv "$nvim_dest_path" "$backup_path" || fatal "Could not create backup."
     cp -r "$nvim_src_path" "$nvim_dest_path" || err_msg "Could not copy '$nvim_src_path'"
-
+  else
+    cp -r "$nvim_src_path" "$nvim_dest_path" || err_msg "Could not copy '$nvim_src_path'"
   fi
 
   local tmux_src_path="./tmux"
   local tmux_dest_path="$CONFIG_PATH/tmux"
 
-  if [[ -d "$tmux_src_path" ]]; then
-    local mid="$(date +%m-%M-%S)"
+  if [[ -d "$tmux_dest_path" ]]; then
+    local mid
+    mid="$(date +%m-%M-%S)"
 
     local backup_path="$CONFIG_PATH/tmux.$mid.backup"
     msg "'$tmux_dest_path' already exists creating backup '$backup_path'"
 
     mv "$tmux_dest_path" "$backup_path" || fatal "Could not create backup."
     cp -r "$tmux_src_path" "$tmux_dest_path" || err_msg "Could not copy '$tmux_src_path'"
-
+  else
+    cp -r "$tmux_src_path" "$tmux_dest_path" || err_msg "Could not copy '$tmux_src_path'"
   fi
 
 }
