@@ -6,14 +6,13 @@ fi
 
 if ! [ -f "$HOME/.local/share/pkgs.json" ]; then
   tmux display "Setting up packages please wait "
-  tx_launch -ls &
-  wait
+  tx_launch -ls
 fi
 
-app=$(tx_launch -ls | fzf --header="Apps" --margin 15% --bind alt-m:accept,alt-e:abort)
+apps=$(tx_launch -ls)
+app=$(echo "$apps" | fzf --header="Apps" --margin 15% --bind alt-m:accept,alt-e:abort)
 
 if ! tx_launch -a system -r "$app"; then
-
   if ! tx_launch -a new -r "$app"; then
 
     if ! tx_launch -r "$app"; then
