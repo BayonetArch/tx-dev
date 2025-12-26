@@ -1,9 +1,25 @@
 #!/data/data/com.termux/files/usr/bin/env sh
-# ----List current tmux-sessions in a new skim window-----------
 
-if [ -z $TMUX ]; then
+if [ -z "$TMUX" ]; then
   exit 1
 fi
 
+if ! [ -f "$HOME/.local/share/pkgs.json" ]; then
+  tmux display "Setting up packages please wait "
+  tx_launch -ls &
+  wait
+fi
+
 app=$(tx_launch -ls | fzf --header="Apps" --margin 15% --bind alt-m:accept,alt-e:abort)
-tx_launch -a system -r "$app"
+
+if ! tx_launch -a system -r "$app"; then
+
+  if ! tx_launch -a new -r "$app"; then
+
+    if ! tx_launch -r "$app"; then
+      tmux display "Could not launch $app"
+      exit 1
+    fi
+  fi
+
+fi

@@ -73,6 +73,7 @@ install_dependencies() {
     ["nodejs"]="node"
     ["cmake"]="cmake"
     ["make"]="make"
+    ["appt"]="appt"
   )
 
   local packages_bin=("${package_map[@]}")
